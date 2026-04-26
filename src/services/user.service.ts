@@ -1,61 +1,73 @@
-import { AppDataSource } from '../data-source';
+import { In, Repository } from 'typeorm';
 import { Role } from '../entities/Role';
 import { User } from '../entities/User';
 import { AuthUtils } from '../utils/auth.utils';
-
+import { NotFoundError } from '../utils/errors.utils';
 
 export class UserService {
-    static async create(newUser: User) {
-        try {
-            const { email, username, password, firstName, lastName } = newUser;
+    constructor(
+        private readonly userRepository: Repository<User>,
+        private readonly roleRepository: Repository<Role>
+    ) {}
 
-            const userRepository = AppDataSource.getRepository(User);
+    async getByEmail(email: string): Promise<User | null> {
+        return this.userRepository.findOne({
+            where: { email },
+            relations: ['roles'],
+        });
+    }
 
-            const existingUser = await userRepository.findOne({
-                where: [{ email }, { username }],
-            });
+    async getById(id: string): Promise<User | null> {
+        return this.userRepository.findOne({
+            where: { id },
+            relations: ['roles'],
+        });
+    }
 
-            if (existingUser) {
-                throw Error('User with this email or username already exists');
-            }
+    async getAll(count?: number, offset?: number): Promise<User[]> {
+        return this.userRepository.find({
+            relations: ['roles'],
+            take: count,
+            skip: offset,
+        });
+    }
 
-            const hashedPassword = await AuthUtils.hashPassword(password);
-
-            const user = userRepository.create({
-                email,
-                username,
-                password: hashedPassword,
-                firstName,
-                lastName,
-            });
-
-            // Asignar rol de usuario por defecto
-            const roleRepository = AppDataSource.getRepository(Role);
-            const defaultRole = await roleRepository.findOne({
-                where: { name: 'user' },
-            });
-
-            if (defaultRole) {
-                user.roles = [defaultRole];
-            }
-
-            await userRepository.save(user);
-
-            const token = AuthUtils.generateToken(user);
-            const refreshToken = AuthUtils.generateRefreshToken(user);
-
-            return {
-                message: 'User registered successfully',
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    username: user.username,
-                },
-                token,
-                refreshToken,
-            };
-        } catch (error) {
-            throw Error('Error registering user');
+    async update(
+        id: string,
+        firstName: string,
+        lastName: string,
+        email?: string,
+        password?: string,
+        roleNames?: string[],
+        avatar?: string
+    ): Promise<User | null> {
+        const user = await this.getById(id);
+        if (!user) {
+            return null;
         }
+
+        if (firstName) user.firstName = firstName;
+        if (lastName) user.lastName = lastName;
+        if (email) user.email = email;
+        if (password) user.password = await AuthUtils.hashPassword(password);
+        if (roleNames) {
+            const roles = await this.roleRepository.findBy({
+                id: In(roleNames),
+            });
+            user.roles = roles;
+        }
+        if (avatar) user.avatar = avatar;
+
+        return this.userRepository.save(user);
+    }
+
+    async disable(id: string): Promise<boolean> {
+        const user = await this.getById(id);
+        if (!user) {
+            throw new NotFoundError('User not found');
+        }
+        user.isActive = false;
+        await this.userRepository.save(user);
+        return true;
     }
 }
