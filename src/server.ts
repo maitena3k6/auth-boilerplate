@@ -4,7 +4,7 @@ import { AppDataSource } from './data-source';
 
 dotenv.config();
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
     try {
@@ -13,10 +13,7 @@ const startServer = async () => {
                 console.log('✓ Conexión a la base de datos establecida');
             })
             .catch((error: Error) => {
-                console.error(
-                    '𐄂 Error al conectar a la base de datos:',
-                    error
-                );
+                console.error('𐄂 Error al conectar a la base de datos:', error);
             });
 
         const server = app.listen(PORT, () => {
