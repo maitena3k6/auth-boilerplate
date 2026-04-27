@@ -12,62 +12,12 @@ export class AuthService {
         private readonly roleRepository: Repository<Role>
     ) {}
 
-    async register(
-        email: string,
-        username: string,
-        password: string,
-        firstName: string,
-        lastName: string
-    ) {
-        const existingUser = await this.userRepository.findOne({
-            where: [{ email }, { username }],
-        });
-
-        if (existingUser) {
-            throw APIError.badRequest('Email or username already exists');
-        }
-
-        const hashedPassword = await AuthUtils.hashPassword(password);
-
-        const user = this.userRepository.create({
-            email,
-            username,
-            password: hashedPassword,
-            firstName,
-            lastName,
-        });
-
-        // Asignar rol de usuario por defecto
-        const defaultRole = await this.roleRepository.findOne({
-            where: { name: 'user' },
-        });
-
-        if (defaultRole) {
-            user.roles = [defaultRole];
-        }
-
-        await this.userRepository.save(user);
-
-        const token = AuthUtils.generateToken(user);
-        const refreshToken = AuthUtils.generateRefreshToken(user);
-
-        return {
-            user: {
-                id: user.id,
-                email: user.email,
-                username: user.username,
-            },
-            token,
-            refreshToken,
-        };
-    }
-
-    async login(
+    login = async (
         email: string,
         password: string,
         ipAddress: string,
         userAgent: string
-    ) {
+    ) => {
         const user = await this.userRepository
             .createQueryBuilder('user')
             .addSelect('user.password')
@@ -115,33 +65,59 @@ export class AuthService {
             token,
             refreshToken,
         };
-    }
+    };
 
-    async logout(token?: string, user?: User) {
-        if (!token || !user) {
-            throw APIError.unauthorized('Invalid token or user');
-        }
-
-        // Buscar la sesión específica por token y userId
-        const session = await this.sessionRepository.findOne({
-            where: {
-                token: token,
-                userId: user.id,
-                isValid: true,
-            },
+    register = async (
+        email: string,
+        username: string,
+        password: string,
+        firstName?: string,
+        lastName?: string
+    ) => {
+        const existingUser = await this.userRepository.findOne({
+            where: [{ email }, { username }],
         });
 
-        if (!session) {
-            throw APIError.notFound('Session not found');
+        if (existingUser) {
+            throw APIError.badRequest('Email or username already exists');
         }
 
-        session.isValid = false;
-        await this.sessionRepository.save(session);
+        const hashedPassword = await AuthUtils.hashPassword(password);
 
-        return { message: 'Logged out successfully' };
+        const user = this.userRepository.create({
+            email,
+            username,
+            password: hashedPassword,
+            firstName,
+            lastName,
+        });
+
+        // Asignar rol de usuario por defecto
+        const defaultRole = await this.roleRepository.findOne({
+            where: { name: 'user' },
+        });
+
+        if (defaultRole) {
+            user.roles = [defaultRole];
+        }
+
+        await this.userRepository.save(user);
+
+        const token = AuthUtils.generateToken(user);
+        const refreshToken = AuthUtils.generateRefreshToken(user);
+
+        return {
+            user: {
+                id: user.id,
+                email: user.email,
+                username: user.username,
+            },
+            token,
+            refreshToken,
+        };
     }
 
-    async refreshToken(oldRefreshToken: string) {
+    refreshToken = async (oldRefreshToken: string) => {
         const session = await this.sessionRepository.findOne({
             where: { token: oldRefreshToken, isValid: true },
             relations: ['user', 'user.roles'],
@@ -175,5 +151,29 @@ export class AuthService {
             token: newToken,
             refreshToken: newRefreshToken,
         };
+    }
+
+    logout = async (token?: string, user?: User) => {
+        if (!token || !user) {
+            throw APIError.unauthorized('Invalid token or user');
+        }
+
+        // Buscar la sesión específica por token y userId
+        const session = await this.sessionRepository.findOne({
+            where: {
+                token: token,
+                userId: user.id,
+                isValid: true,
+            },
+        });
+
+        if (!session) {
+            throw APIError.notFound('Session not found');
+        }
+
+        session.isValid = false;
+        await this.sessionRepository.save(session);
+
+        return { message: 'Logged out successfully' };
     }
 }

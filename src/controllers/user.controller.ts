@@ -1,12 +1,13 @@
 import type { Response } from 'express';
-import type { AuthRequest } from '../dto/api-request.dto';
+import type { AuthRequest, TypedRequest } from '../utils/typed-request';
+import type { UpdateProfileDto } from '../dtos/users.dto';
 import { UserService } from '../services/user.service';
 import { APIError, APIResponse } from 'express-api-utils';
 
 export class UserController {
     constructor(private userService: UserService) {}
 
-    async getProfile(req: AuthRequest, res: Response) {
+    getProfile = async (req: AuthRequest, res: Response) => {
         const user = req.user;
         if (!user) {
             throw APIError.unauthorized('Unauthorized');
@@ -21,9 +22,9 @@ export class UserController {
             roles: user.roles.map((role) => role.name),
             avatar: user.avatar,
         }).send(res);
-    }
+    };
 
-    async getUserById(req: AuthRequest, res: Response) {
+    getUserById = async (req: AuthRequest, res: Response) => {
         const { id } = req.params;
         const user = await this.userService.getById(id as string);
         if (!user) {
@@ -39,14 +40,12 @@ export class UserController {
             roles: user.roles.map((role) => role.name),
             avatar: user.avatar,
         }).send(res);
-    }
+    };
 
-    async getUserByEmail(req: AuthRequest, res: Response) {
-        const { email } = req.query;
-        if (!email || typeof email !== 'string') {
-            throw APIError.badRequest('Email query parameter is required');
-        }
-
+    getUserByEmail = async (req: AuthRequest, res: Response) => {
+        const email = req.params.email as string;
+        console.log(req.params);
+        
         const user = await this.userService.getByEmail(email);
         if (!user) {
             throw APIError.notFound('User not found');
@@ -61,34 +60,36 @@ export class UserController {
             roles: user.roles.map((role) => role.name),
             avatar: user.avatar,
         }).send(res);
-    }
+    };
 
-    async getAllUsers(req: AuthRequest, res: Response) {
+    getAllUsers = async (req: AuthRequest, res: Response) => {
         const { count, offset } = req.query;
         const users = await this.userService.getAll(
             count ? parseInt(count as string, 10) : undefined,
             offset ? parseInt(offset as string, 10) : undefined
         );
         new APIResponse(users).send(res);
-    }
+    };
 
-    async updateProfile(req: AuthRequest, res: Response) {
+    updateProfile = async (
+        req: TypedRequest<UpdateProfileDto>,
+        res: Response
+    ) => {
         const user = req.user;
         if (!user) {
             throw APIError.unauthorized('Unauthorized');
         }
 
-        const { firstName, lastName, email, password, avatar } = req.body;
+        const { firstName, lastName, email, avatar, roleNames } = req.body;
 
-        const updatedUser = await this.userService.update(
-            user.id,
+        const updatedUser = await this.userService.update({
+            id: user.id,
             firstName,
             lastName,
             email,
-            password,
-            undefined,
-            avatar
-        );
+            avatar,
+            roleNames,
+        });
 
         if (!updatedUser) {
             throw APIError.notFound('User not found');
@@ -98,14 +99,14 @@ export class UserController {
             id: updatedUser.id,
             email: updatedUser.email,
             username: updatedUser.username,
+            avatar: updatedUser.avatar,
             firstName: updatedUser.firstName,
             lastName: updatedUser.lastName,
             roles: updatedUser.roles.map((role) => role.name),
-            avatar: updatedUser.avatar,
         }).send(res);
-    }
+    };
 
-    async disableProfile(req: AuthRequest, res: Response) {
+    disableProfile = async (req: AuthRequest, res: Response) => {
         const user = req.user;
         if (!user) {
             throw APIError.unauthorized('Unauthorized');
@@ -114,5 +115,5 @@ export class UserController {
         await this.userService.disable(user.id);
 
         new APIResponse({ message: 'Profile disabled successfully' }).send(res);
-    }
+    };
 }
