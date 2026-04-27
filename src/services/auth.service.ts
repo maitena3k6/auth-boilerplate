@@ -115,7 +115,7 @@ export class AuthService {
             token,
             refreshToken,
         };
-    }
+    };
 
     refreshToken = async (oldRefreshToken: string) => {
         const session = await this.sessionRepository.findOne({
@@ -151,7 +151,7 @@ export class AuthService {
             token: newToken,
             refreshToken: newRefreshToken,
         };
-    }
+    };
 
     logout = async (token?: string, user?: User) => {
         if (!token || !user) {
@@ -166,14 +166,18 @@ export class AuthService {
                 isValid: true,
             },
         });
-
-        if (!session) {
-            throw APIError.notFound('Session not found');
+        
+        if (
+            !session ||
+            session.expiresAt < new Date() ||
+            !session.user.isActive
+        ) {
+            throw APIError.unauthorized('Invalid or expired refresh token');
         }
 
         session.isValid = false;
         await this.sessionRepository.save(session);
 
         return { message: 'Logged out successfully' };
-    }
+    };
 }
