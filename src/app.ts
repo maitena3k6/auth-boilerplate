@@ -1,4 +1,4 @@
-import type { Application} from 'express';
+import type { Application } from 'express';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -18,4 +18,4 @@ app.use(router);
 
 app.use(errorHandler);
 
-export default app;
+export { app };
