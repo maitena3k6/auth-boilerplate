@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { User } from '../entities/User';
+import { User } from '@src/entities/User';
 
 export class AuthUtils {
     static async hashPassword(password: string): Promise<string> {
