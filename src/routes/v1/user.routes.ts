@@ -6,9 +6,9 @@ import { UserService } from '@src/services/user.service';
 import { User } from '@src/entities/User';
 import { Role } from '@src/entities/Role';
 import { validate } from '@src/middlewares/validate.middleware';
+import { requirePermissions } from '@src/middlewares/permissions.middleware';
 import {
     disableUserValidation,
-    getUserByEmailValidation,
     getUserByIdValidation,
     updateUserValidation,
 } from '@src/validators/users.validator';
@@ -24,26 +24,25 @@ const userController = new UserController(userService);
 router.use(authenticate);
 
 router.get('/', asyncHandler(userController.getAllUsers));
-router.get('/profile', asyncHandler(userController.getProfile));
-router.put(
-    '/profile',
-    validate(updateUserValidation),
-    asyncHandler(userController.updateProfile)
-);
-router.get(
-    '/email/:email',
-    validate(getUserByEmailValidation),
-    asyncHandler(userController.getUserByEmail)
-);
+
 router.get(
     '/:id',
     validate(getUserByIdValidation),
     asyncHandler(userController.getUserById)
 );
+
+router.put(
+    '/:id',
+    requirePermissions('manage:all'),
+    validate(updateUserValidation),
+    asyncHandler(userController.updateUser)
+);
+
 router.delete(
     '/:id',
+    requirePermissions('manage:all'),
     validate(disableUserValidation),
-    asyncHandler(userController.disableProfile)
+    asyncHandler(userController.deleteUser)
 );
 
 export default router;

@@ -14,10 +14,6 @@ export const updateUserValidation = [
     body('avatar').optional().isURL().withMessage('Avatar must be a valid URL'),
 ];
 
-export const getUserByEmailValidation = [
-    param('email').exists().isEmail().withMessage('Invalid email format'),
-];
-
 export const getUserByIdValidation = [
     param('id').isUUID().withMessage('Invalid user ID format'),
 ];
