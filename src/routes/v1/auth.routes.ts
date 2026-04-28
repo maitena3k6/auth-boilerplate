@@ -1,11 +1,17 @@
 import { Router } from 'express';
-import { AuthController } from '../../controllers/auth.controller';
-import { User } from '../../entities/User';
-import { Session } from '../../entities/Session';
-import { AuthService } from '../../services/auth.service';
-import { AppDataSource } from '../../data-source';
-import { Role } from '../../entities/Role';
-import { asyncHandler } from 'express-api-utils';
+import { AuthController } from '@src/controllers/auth.controller';
+import { User } from '@src/entities/User';
+import { Session } from '@src/entities/Session';
+import { AuthService } from '@src/services/auth.service';
+import { AppDataSource } from '@src/data-source';
+import { Role } from '@src/entities/Role';
+import { validate } from '@src/middlewares/validate.middleware';
+import {
+    loginValidation,
+    refreshTokenValidation,
+    registerValidation,
+} from '@src/validators/auth.validator';
+import { asyncHandler } from '@src/utils/async-handler';
 
 const router = Router();
 
@@ -17,11 +23,24 @@ const authService = new AuthService(
     sessionRepository,
     roleRepository
 );
+
 const authController = new AuthController(authService);
 
-router.post('/login', asyncHandler(authController.login));
-router.post('/register', asyncHandler(authController.register));
+router.post(
+    '/login',
+    validate(loginValidation),
+    asyncHandler(authController.login)
+);
+router.post(
+    '/register',
+    validate(registerValidation),
+    asyncHandler(authController.register)
+);
+router.post(
+    '/refresh',
+    validate(refreshTokenValidation),
+    asyncHandler(authController.refreshToken)
+);
 router.post('/logout', asyncHandler(authController.logout));
-router.post('/refresh', asyncHandler(authController.refreshToken));
 
 export default router;

@@ -1,10 +1,18 @@
 import { Router } from 'express';
-import { UserController } from '../../controllers/user.controller';
-import { authenticate } from '../../middlewares/auth.middleware';
-import { AppDataSource } from '../../data-source';
-import { UserService } from '../../services/user.service';
-import { User } from '../../entities/User';
-import { Role } from '../../entities/Role';
+import { UserController } from '@src/controllers/user.controller';
+import { authenticate } from '@src/middlewares/auth.middleware';
+import { AppDataSource } from '@src/data-source';
+import { UserService } from '@src/services/user.service';
+import { User } from '@src/entities/User';
+import { Role } from '@src/entities/Role';
+import { validate } from '@src/middlewares/validate.middleware';
+import { requirePermissions } from '@src/middlewares/permissions.middleware';
+import {
+    disableUserValidation,
+    getUserByIdValidation,
+    updateUserValidation,
+} from '@src/validators/users.validator';
+import { asyncHandler } from '@src/utils/async-handler';
 
 const router = Router();
 
@@ -15,11 +23,26 @@ const userController = new UserController(userService);
 
 router.use(authenticate);
 
-router.get('/', userController.getAllUsers);
-router.get('/profile', userController.getProfile);
-router.put('/profile', userController.updateProfile);
-router.get('/email/:email', userController.getUserByEmail);
-router.get('/:id', userController.getUserById);
-router.delete('/:id', userController.disableProfile);
+router.get('/', asyncHandler(userController.getAllUsers));
+
+router.get(
+    '/:id',
+    validate(getUserByIdValidation),
+    asyncHandler(userController.getUserById)
+);
+
+router.put(
+    '/:id',
+    requirePermissions('manage:all'),
+    validate(updateUserValidation),
+    asyncHandler(userController.updateUser)
+);
+
+router.delete(
+    '/:id',
+    requirePermissions('manage:all'),
+    validate(disableUserValidation),
+    asyncHandler(userController.deleteUser)
+);
 
 export default router;

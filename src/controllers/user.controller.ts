@@ -1,93 +1,54 @@
 import type { Response } from 'express';
-import type { AuthRequest } from '../dto/api-request.dto';
-import { UserService } from '../services/user.service';
-import { APIError, APIResponse } from 'express-api-utils';
+import type { AuthRequest, TypedRequest } from '@src/types/typed-request';
+import { APIResponse } from '@src/utils/api-response';
+import { APIError } from '@src/utils/api-error';
+import { UserService } from '@src/services/user.service';
+import { UpdateUserDto } from '@src/dtos/users.dto';
+import { checkPermissions } from '@src/utils/permission-checker';
 
 export class UserController {
     constructor(private userService: UserService) {}
 
-    async getProfile(req: AuthRequest, res: Response) {
-        const user = req.user;
-        if (!user) {
-            throw APIError.unauthorized('Unauthorized');
-        }
-
-        new APIResponse({
-            id: user.id,
-            email: user.email,
-            username: user.username,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            roles: user.roles.map((role) => role.name),
-            avatar: user.avatar,
-        }).send(res);
-    }
-
-    async getUserById(req: AuthRequest, res: Response) {
-        const { id } = req.params;
-        const user = await this.userService.getById(id as string);
-        if (!user) {
-            throw APIError.notFound('User not found');
-        }
-
-        new APIResponse({
-            id: user.id,
-            email: user.email,
-            username: user.username,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            roles: user.roles.map((role) => role.name),
-            avatar: user.avatar,
-        }).send(res);
-    }
-
-    async getUserByEmail(req: AuthRequest, res: Response) {
-        const { email } = req.query;
-        if (!email || typeof email !== 'string') {
-            throw APIError.badRequest('Email query parameter is required');
-        }
-
-        const user = await this.userService.getByEmail(email);
-        if (!user) {
-            throw APIError.notFound('User not found');
-        }
-
-        new APIResponse({
-            id: user.id,
-            email: user.email,
-            username: user.username,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            roles: user.roles.map((role) => role.name),
-            avatar: user.avatar,
-        }).send(res);
-    }
-
-    async getAllUsers(req: AuthRequest, res: Response) {
+    getAllUsers = async (req: AuthRequest, res: Response) => {
         const { count, offset } = req.query;
-        const users = await this.userService.getAll(
+        const users = await this.userService.getAllUsers(
             count ? parseInt(count as string, 10) : undefined,
             offset ? parseInt(offset as string, 10) : undefined
         );
         new APIResponse(users).send(res);
-    }
+    };
 
-    async updateProfile(req: AuthRequest, res: Response) {
-        const user = req.user;
+    getUserById = async (req: AuthRequest, res: Response) => {
+        const { id } = req.params;
+        const user = await this.userService.getUserById(id as string);
         if (!user) {
-            throw APIError.unauthorized('Unauthorized');
+            throw APIError.notFound('User not found');
         }
 
-        const { firstName, lastName, email, password, avatar } = req.body;
+        new APIResponse({
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            roles: user.roles.map((role) => role.name),
+            avatar: user.avatar,
+        }).send(res);
+    };
 
-        const updatedUser = await this.userService.update(
-            user.id,
-            firstName,
-            lastName,
-            email,
-            password,
-            undefined,
-            avatar
+    updateUser = async (req: TypedRequest<UpdateUserDto>, res: Response) => {
+        const userSession = req.user;
+        const userToUpdateData = req.body;
+        const userToUpdateId = req.params.id as string;
+
+        if (!userToUpdateData || !userSession || !userToUpdateId) {
+            throw APIError.badRequest('Invalid request data');
+        }
+
+        const updatedUser = await this.userService.updateUser(
+            userToUpdateId,
+            userToUpdateData,
+            userSession
         );
 
         if (!updatedUser) {
@@ -98,21 +59,29 @@ export class UserController {
             id: updatedUser.id,
             email: updatedUser.email,
             username: updatedUser.username,
+            avatar: updatedUser.avatar,
             firstName: updatedUser.firstName,
             lastName: updatedUser.lastName,
             roles: updatedUser.roles.map((role) => role.name),
-            avatar: updatedUser.avatar,
         }).send(res);
-    }
+    };
 
-    async disableProfile(req: AuthRequest, res: Response) {
-        const user = req.user;
-        if (!user) {
-            throw APIError.unauthorized('Unauthorized');
+    deleteUser = async (req: AuthRequest, res: Response) => {
+        const userSession = req.user;
+        const userToDeleteId = req.params.id as string;
+
+        if (!userSession || !userToDeleteId) {
+            throw APIError.badRequest('Invalid request data');
         }
 
-        await this.userService.disable(user.id);
+        const canDeleteUser = checkPermissions(userSession).isAdmin();
 
-        new APIResponse({ message: 'Profile disabled successfully' }).send(res);
-    }
+        if (!canDeleteUser) {
+            throw APIError.notFound('Resource not reachable');
+        }
+
+        await this.userService.deleteUser(userToDeleteId);
+
+        new APIResponse({ message: 'User deleted successfully' }).send(res);
+    };
 }

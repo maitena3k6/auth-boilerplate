@@ -15,43 +15,43 @@ import { Session } from './Session';
 @Entity('users')
 export class User extends BaseEntity {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    id!: string;
 
     @Column({ unique: true, length: 100 })
-    email: string;
+    email!: string;
 
     @Column({ unique: true, length: 50 })
-    username: string;
+    username!: string;
 
     @Column({ select: false })
-    password: string;
+    password!: string;
 
     @Column({ nullable: true, length: 100 })
-    firstName: string;
+    firstName!: string;
 
     @Column({ nullable: true, length: 100 })
-    lastName: string;
+    lastName!: string;
 
     @Column({ nullable: true })
-    avatar: string;
+    avatar!: string;
 
     @Column({ default: true })
-    isActive: boolean;
+    isActive!: boolean;
 
     @Column({ default: false })
-    isEmailVerified: boolean;
+    isEmailVerified!: boolean;
 
     @Column({ nullable: true })
-    emailVerificationToken: string;
+    emailVerificationToken!: string;
 
     @Column({ nullable: true })
-    resetPasswordToken: string;
+    resetPasswordToken!: string;
 
     @Column({ type: 'timestamp', nullable: true })
-    resetPasswordExpires: Date;
+    resetPasswordExpires!: Date;
 
     @Column({ type: 'timestamp', nullable: true })
-    lastLogin: Date;
+    lastLogin!: Date;
 
     @ManyToMany(() => Role, (role) => role.users)
     @JoinTable({
@@ -59,14 +59,14 @@ export class User extends BaseEntity {
         joinColumn: { name: 'userId', referencedColumnName: 'id' },
         inverseJoinColumn: { name: 'roleId', referencedColumnName: 'id' },
     })
-    roles: Role[];
+    roles!: Role[];
 
     @OneToMany(() => Session, (session) => session.user)
-    sessions: Session[];
+    sessions!: Session[];
 
     @CreateDateColumn()
-    createdAt: Date;
+    createdAt!: Date;
 
     @UpdateDateColumn()
-    updatedAt: Date;
+    updatedAt!: Date;
 }
