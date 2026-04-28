@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { HealthController } from '../../controllers/health.controller';
-import { HealthService } from '../../services/health.service';
-import { AppDataSource } from '../../data-source';
-import { asyncHandler } from 'express-api-utils';
+import { HealthController } from '@src/controllers/health.controller';
+import { HealthService } from '@src/services/health.service';
+import { AppDataSource } from '@src/data-source';
+import { asyncHandler } from '@src/utils/async-handler';
 
 const router = Router();
 

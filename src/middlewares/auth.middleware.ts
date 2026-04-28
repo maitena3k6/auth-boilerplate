@@ -1,9 +1,9 @@
 import type { Response, NextFunction } from 'express';
-import type { AuthRequest } from '../utils/typed-request';
+import type { AuthRequest } from '@src/utils/typed-request';
 import jwt from 'jsonwebtoken';
-import { User } from '../entities/User';
-import { AppDataSource } from '../data-source';
-import { APIError } from 'express-api-utils';
+import { APIError } from '@src/utils/api-error';
+import { User } from '@src/entities/User';
+import { AppDataSource } from '@src/data-source';
 
 export const authenticate = async (
     req: AuthRequest,

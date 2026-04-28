@@ -1,8 +1,9 @@
 import type { Response } from 'express';
-import type { AuthRequest, TypedRequest } from '../utils/typed-request';
-import type { UpdateProfileDto } from '../dtos/users.dto';
-import { UserService } from '../services/user.service';
-import { APIError, APIResponse } from 'express-api-utils';
+import { APIResponse } from '@src/utils/api-response';
+import { APIError } from '@src/utils/api-error';
+import type { AuthRequest, TypedRequest } from '@src/utils/typed-request';
+import { UserService } from '@src/services/user.service';
+import { UpdateProfileDto } from '@src/dtos/users.dto';
 
 export class UserController {
     constructor(private userService: UserService) {}
@@ -45,7 +46,7 @@ export class UserController {
     getUserByEmail = async (req: AuthRequest, res: Response) => {
         const email = req.params.email as string;
         console.log(req.params);
-        
+
         const user = await this.userService.getByEmail(email);
         if (!user) {
             throw APIError.notFound('User not found');

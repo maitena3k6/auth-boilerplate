@@ -1,18 +1,18 @@
 import { Router } from 'express';
-import { asyncHandler } from 'express-api-utils';
-import { UserController } from '../../controllers/user.controller';
-import { authenticate } from '../../middlewares/auth.middleware';
-import { AppDataSource } from '../../data-source';
-import { UserService } from '../../services/user.service';
-import { User } from '../../entities/User';
-import { Role } from '../../entities/Role';
-import { validate } from '../../middlewares/validate.middleware';
+import { UserController } from '@src/controllers/user.controller';
+import { authenticate } from '@src/middlewares/auth.middleware';
+import { AppDataSource } from '@src/data-source';
+import { UserService } from '@src/services/user.service';
+import { User } from '@src/entities/User';
+import { Role } from '@src/entities/Role';
+import { validate } from '@src/middlewares/validate.middleware';
 import {
     disableUserValidation,
     getUserByEmailValidation,
     getUserByIdValidation,
     updateUserValidation,
-} from '../../validators/users.validator';
+} from '@src/validators/users.validator';
+import { asyncHandler } from '@src/utils/async-handler';
 
 const router = Router();
 

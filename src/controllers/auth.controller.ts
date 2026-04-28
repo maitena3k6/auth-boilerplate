@@ -1,8 +1,8 @@
 import type { Response } from 'express';
-import type { AuthRequest, TypedRequest } from '../utils/typed-request';
-import type { LoginDto, RefreshTokenDto, RegisterDto } from '../dtos/auth.dto';
-import { AuthService } from '../services/auth.service';
-import { APIResponse } from 'express-api-utils';
+import type { LoginDto, RefreshTokenDto, RegisterDto } from '@src/dtos/auth.dto';
+import type { AuthRequest, TypedRequest } from '@src/utils/typed-request';
+import { AuthService } from '@src/services/auth.service';
+import { APIResponse } from '@src/utils/api-response';
 
 export class AuthController {
     constructor(private readonly authService: AuthService) {}

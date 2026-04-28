@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import { HealthService } from '../services/health.service';
-import { APIResponse } from 'express-api-utils';
+import { HealthService } from '@src/services/health.service';
+import { APIResponse } from '@src/utils/api-response';
 
 export class HealthController {
     constructor(private readonly healthService: HealthService) {}

@@ -1,8 +1,8 @@
-import type { UpdateProfileDto } from '../dtos/users.dto';
+import type { UpdateProfileDto } from '@src/dtos/users.dto';
 import { In, Repository } from 'typeorm';
-import { Role } from '../entities/Role';
-import { User } from '../entities/User';
-import { APIError } from 'express-api-utils';
+import { Role } from '@src/entities/Role';
+import { User } from '@src/entities/User';
+import { APIError } from '@src/utils/api-error';
 
 export class UserService {
     constructor(

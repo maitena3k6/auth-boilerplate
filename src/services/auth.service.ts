@@ -1,9 +1,9 @@
 import type { Repository } from 'typeorm';
-import { APIError } from 'express-api-utils';
-import { Role } from '../entities/Role';
-import { Session } from '../entities/Session';
-import { User } from '../entities/User';
-import { AuthUtils } from '../utils/auth.utils';
+import { Role } from '@src/entities/Role';
+import { User } from '@src/entities/User';
+import { Session } from '@src/entities/Session';
+import { AuthUtils } from '@src/utils/auth.utils';
+import { APIError } from '@src/utils/api-error';
 
 export class AuthService {
     constructor(
@@ -49,6 +49,7 @@ export class AuthService {
         const session = this.sessionRepository.create({
             token: refreshToken,
             userId: user.id,
+            user: user,
             ipAddress,
             userAgent,
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
@@ -123,6 +124,9 @@ export class AuthService {
             relations: ['user', 'user.roles'],
         });
 
+        console.log("Session :", session);
+        
+
         if (!session || session.expiresAt < new Date()) {
             throw APIError.unauthorized('Invalid or expired refresh token');
         }
@@ -166,7 +170,7 @@ export class AuthService {
                 isValid: true,
             },
         });
-        
+
         if (
             !session ||
             session.expiresAt < new Date() ||
