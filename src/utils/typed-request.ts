@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import { User } from '../entities/User';
+import { User } from '@src/entities/User';
 
 export type AuthRequest = { user?: User } & Request;
 
