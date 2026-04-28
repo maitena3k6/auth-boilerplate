@@ -1,7 +1,9 @@
+import { Role } from "@src/entities/Role";
+
 export interface UpdateProfileDto {
     firstName?: string;
     lastName?: string;
     email?: string;
     avatar?: string;
-    roleNames?: string[]; 
+    roles?: Role[]; 
 }
