@@ -1,6 +1,6 @@
 import { Role } from "@src/entities/Role";
 
-export interface UpdateProfileDto {
+export interface UpdateUserDto {
     firstName?: string;
     lastName?: string;
     email?: string;

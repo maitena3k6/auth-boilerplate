@@ -1,8 +1,9 @@
-import type { UpdateProfileDto } from '@src/dtos/users.dto';
+import type { UpdateUserDto } from '@src/dtos/users.dto';
 import { In, Repository } from 'typeorm';
 import { Role } from '@src/entities/Role';
 import { User } from '@src/entities/User';
 import { APIError } from '@src/utils/api-error';
+import { checkPermissions } from '@src/utils/permission-checker';
 
 export class UserService {
     constructor(
@@ -10,21 +11,7 @@ export class UserService {
         private readonly roleRepository: Repository<Role>
     ) {}
 
-    getByEmail = async (email: string): Promise<User | null> => {
-        return this.userRepository.findOne({
-            where: { email },
-            relations: ['roles'],
-        });
-    };
-
-    getById = async (id: string): Promise<User | null> => {
-        return this.userRepository.findOne({
-            where: { id },
-            relations: ['roles'],
-        });
-    };
-
-    getAll = async (count?: number, offset?: number): Promise<User[]> => {
+    getAllUsers = (count?: number, offset?: number): Promise<User[]> => {
         return this.userRepository.find({
             relations: ['roles'],
             take: count,
@@ -32,37 +19,70 @@ export class UserService {
         });
     };
 
-    update = async (
-        userData: UpdateProfileDto & { id: string; roleNames?: string[] }
-    ): Promise<User | null> => {
-        const { id, firstName, lastName, email, roleNames, avatar } = userData;
-
-        const user = await this.getById(id);
-        if (!user) {
-            return null;
-        }
-
-        if (firstName) user.firstName = firstName;
-        if (lastName) user.lastName = lastName;
-        if (email) user.email = email;
-        if (roleNames) {
-            const roles = await this.roleRepository.findBy({
-                id: In(roleNames),
-            });
-            user.roles = roles;
-        }
-        if (avatar) user.avatar = avatar;
-
-        return this.userRepository.save(user);
+    getUserById = (id: string): Promise<User | null> => {
+        return this.userRepository.findOne({
+            where: { id },
+            relations: ['roles'],
+        });
     };
 
-    disable = async (id: string): Promise<boolean> => {
-        const user = await this.getById(id);
+    updateUser = async (
+        userIdToUpdate: string,
+        userData: UpdateUserDto,
+        currentUser: User
+    ): Promise<User | null> => {
+        const { firstName, lastName, email, roles, avatar } = userData;
+
+        const canModifyUser =
+            checkPermissions(currentUser).canModifyUser(userIdToUpdate);
+
+        const userToUpdate = await this.userRepository.findOneBy({
+            id: userIdToUpdate,
+        });
+
+        if (!canModifyUser || !userToUpdate) {
+            throw APIError.notFound('Resource not reachable');
+        }
+
+        if (email && email !== userToUpdate.email) {
+            const emailExists = await this.userRepository.findOneBy({ email });
+            if (emailExists) {
+                throw APIError.badRequest('Email already in use');
+            }
+            userToUpdate.email = email;
+        }
+
+        if (firstName) userToUpdate.firstName = firstName;
+        if (lastName) userToUpdate.lastName = lastName;
+        if (avatar) userToUpdate.avatar = avatar;
+
+        if (roles) {
+            const roleIds = roles.map((role) => role.id);
+            const validRoles = await this.roleRepository.findBy({
+                id: In(roleIds),
+            });
+
+            if (validRoles.length !== roles.length) {
+                throw APIError.badRequest('One or more roles are invalid');
+            }
+            userToUpdate.roles = validRoles;
+        }
+
+        return this.userRepository.save(userToUpdate);
+    };
+
+    deleteUser = async (id: string): Promise<boolean> => {
+        const user = await this.getUserById(id);
+
         if (!user) {
             throw APIError.notFound('User not found');
         }
-        user.isActive = false;
-        await this.userRepository.save(user);
+        const isAdmin = checkPermissions(user).isAdmin();
+
+        if (!isAdmin) {
+            throw APIError.forbidden('Resource not reachable');
+        }
+        await this.userRepository.remove(user);
         return true;
     };
 }
