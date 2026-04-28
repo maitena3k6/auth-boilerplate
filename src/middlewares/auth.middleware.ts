@@ -1,5 +1,5 @@
 import type { Response, NextFunction } from 'express';
-import type { AuthRequest } from '@src/utils/typed-request';
+import type { AuthRequest } from '@src/types/typed-request';
 import jwt from 'jsonwebtoken';
 import { APIError } from '@src/utils/api-error';
 import { User } from '@src/entities/User';
@@ -32,25 +32,9 @@ export const authenticate = async (
         }
 
         req.user = user;
+
         next();
     } catch (error) {
         throw APIError.unauthorized('Invalid token');
     }
-};
-
-export const authorize = (...roles: string[]) => {
-    return (req: AuthRequest, res: Response, next: NextFunction) => {
-        if (!req.user) {
-            throw APIError.unauthorized('Unauthorized');
-        }
-
-        const userRoles = req.user.roles.map((role) => role.name);
-        const hasRole = roles.some((role) => userRoles.includes(role));
-
-        if (!hasRole) {
-            throw APIError.forbidden('Forbidden');
-        }
-
-        next();
-    };
 };

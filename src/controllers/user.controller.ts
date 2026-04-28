@@ -1,7 +1,7 @@
 import type { Response } from 'express';
 import { APIResponse } from '@src/utils/api-response';
 import { APIError } from '@src/utils/api-error';
-import type { AuthRequest, TypedRequest } from '@src/utils/typed-request';
+import type { AuthRequest, TypedRequest } from '@src/types/typed-request';
 import { UserService } from '@src/services/user.service';
 import { UpdateProfileDto } from '@src/dtos/users.dto';
 
@@ -81,15 +81,14 @@ export class UserController {
             throw APIError.unauthorized('Unauthorized');
         }
 
-        const { firstName, lastName, email, avatar, roleNames } = req.body;
+        const { firstName, lastName, email, avatar, roles } = req.body;
 
-        const updatedUser = await this.userService.update({
-            id: user.id,
+        const updatedUser = await this.userService.update(user.id, user, {
             firstName,
             lastName,
             email,
             avatar,
-            roleNames,
+            roles,
         });
 
         if (!updatedUser) {

@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 import type { LoginDto, RefreshTokenDto, RegisterDto } from '@src/dtos/auth.dto';
-import type { AuthRequest, TypedRequest } from '@src/utils/typed-request';
+import type { AuthRequest, TypedRequest } from '@src/types/typed-request';
 import { AuthService } from '@src/services/auth.service';
 import { APIResponse } from '@src/utils/api-response';
 
