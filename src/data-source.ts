@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import * as path from 'path';
 import dotenv from 'dotenv';
-import { DataSource, ObjectLiteral, ObjectType, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { User } from './entities/User';
 import { Role } from './entities/Role';
 import { Session } from './entities/Session';
@@ -18,7 +18,7 @@ export const AppDataSource = new DataSource({
     synchronize: false,
     logging: true,
     entities: [User, Role, Session],
-    migrations: [path.join(__dirname, 'migrations/**/*.{ts,js}')],
+    migrations: [path.join(__dirname, 'build/src/migrations/**/*.{ts,js}')],
     subscribers: [],
 });
 
