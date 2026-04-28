@@ -16,8 +16,6 @@ export class AuthUtils {
     }
 
     static generateToken(user: User): string {
-        console.log(user);
-        
         return jwt.sign(
             {
                 id: user.id,
