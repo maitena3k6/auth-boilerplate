@@ -55,3 +55,33 @@ export const refreshTokenValidation = [
         .isJWT()
         .withMessage('Invalid refresh token format'),
 ];
+
+export const resendVerificationValidation = [
+    body('email')
+        .isEmail()
+        .withMessage('Invalid email format')
+        .normalizeEmail()
+        .notEmpty()
+        .withMessage('Email is required'),
+];
+
+export const forgotPasswordValidation = [
+    body('email')
+        .isEmail()
+        .withMessage('Invalid email format')
+        .normalizeEmail()
+        .notEmpty()
+        .withMessage('Email is required'),
+];
+
+export const resetPasswordValidation = [
+    body('token').notEmpty().withMessage('Reset token is required'),
+
+    body('newPassword')
+        .isLength({ min: 6 })
+        .withMessage('Password must be at least 6 characters')
+        .matches(/^(?=.*[A-Za-z])(?=.*\d)/)
+        .withMessage(
+            'Password must contain at least one letter and one number'
+        ),
+];
